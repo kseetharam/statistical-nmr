@@ -1,0 +1,43 @@
+[project]
+name = "stNMR"
+version = "0.1.0"
+description = "Stochastic NMR"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Mohammad Haddadnia", email = "mohammad_haddadnia@dfci.harvard.edu"},
+    {name = "Kushal Seetharam", email = "kseetharam@fas.harvard.edu"},
+    {name = "Gaurav Bhole", email = "gaurav_bhole@fas.harvard.edu"},
+]
+maintainers = [
+    {name = "Mohammad Haddadnia", email = "mohammad_haddadnia@dfci.harvard.edu"},
+    {name = "Kushal Seetharam", email = "kseetharam@fas.harvard.edu"},
+    {name = "Gaurav Bhole", email = "gaurav_bhole@fas.harvard.edu"},
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Intended Audience :: Science/Research",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    # "numpy",
+    # "matplotlib",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
