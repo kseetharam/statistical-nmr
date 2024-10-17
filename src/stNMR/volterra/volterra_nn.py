@@ -1,5 +1,10 @@
+from typing import Union
+
 import torch
 from torch import nn
+
+import numpy as np
+from scipy import signal
 
 from stNMR.volterra.volterra_1d import Volterra1D
 from stNMR.volterra.volterra_2d import Volterra2D
@@ -44,3 +49,38 @@ class VolterraNetwork(nn.Module):
 
         elif order == 2:
             return self.kernel_2.conv.weight.detach().squeeze().cpu().numpy()
+
+    # TODO: this can only be implemented after we can do complex convlution in Torch!
+    @classmethod
+    def from_process(cls, y: Union[torch.Tensor, np.ndarray], x: Union[torch.Tensor, np.ndarray], order: int = 2):
+        """
+        Fits the model given an input-output pair by calculating the kernels
+        """
+        kernel_size = x.shape[0]
+        net = cls(kernel_size, order=order)
+
+        if isinstance(y, torch.Tensor):
+            y_arr = y.detach().cpu().numpy()
+        else:
+            y_arr = y
+
+        if isinstance(y, torch.Tensor):
+            x_arr = y.detach().cpu().numpy()
+        else:
+            x_arr = x
+
+        variance = y_arr.var()
+
+        # 0-order term
+        net.kernel_1.conv.bias = torch.from_numpy(y_arr).float()
+
+        # 1-order term
+        net.kernel_1.conv.weight = signal.convolve(y.detach().numpy())
+
+        return net
+
+
+if __name__ == "__main__":
+
+    net = VolterraNetwork.from_process(torch.randn(10), torch.randn(10), 2)
+    print(net)
