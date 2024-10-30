@@ -1,5 +1,5 @@
 paramMat = np.loadtxt(matPath + '/' + mLabel + '.csv', delimiter=',')
-paramMat[i, i] = paramMat[i, i] * toggleDict['refFreqHz'] * 1e-6  # actual parameter in Hz is given by multiplying by the reference frequency (in Hz) and ppm (10^-6). ***the off-diagonal components (Jij) are given directly in Hz
+paramMat[i, i] = paramMat[i, i] * 80 * 1e6 * 1e-6  # actual parameter in Hz is given by multiplying by the reference frequency (in Hz) and ppm (10^-6). ***the off-diagonal components (Jij) are given directly in Hz
 N = paramMat.shape[0]
 hiList = [[paramMat[i, i], i] for i in np.arange(N)]  # extracts hi from parameter matrix (puts in form for QuSpin)
 JijList = [[2 * paramMat[i, j], i, j] for i in np.arange(N) for j in np.arange(N) if (i != j) and (i < j) if not np.isclose(paramMat[i, j], 0)]  # extracts Jij from parameter matrix (puts in form for QuSpin); this list combines the Jij and Jji terms (Hermitian conjugates) into a single term
