@@ -14,15 +14,17 @@ def encode_params(JAB, JBB, Delta):
     assert len(Delta) == nB
 
     dim = int(nA*nB+nB*(nB+1)/2)
-    theta = np.zeros([dim])
-    JAB = np.reshape(JAB, [nA, nB])
-    theta[:nA*nB] = JAB
+    theta = jnp.zeros([dim])
+    #JAB = np.reshape(JAB, [nA, nB])
+    theta = theta.at[:nA*nB].set(jnp.ravel(JAB))
     counter = 0
     for i in range(nB):
         for j in range(i+1,nB):
-            theta[nA*nB+counter] = JBB[i,j]
+            #theta[nA*nB+counter] = JBB[i,j]
+            theta = theta.at[nA*nB+counter].set(JBB[i,j])
             counter += 1
-    theta[nA*nB+counter:] = Delta
+    theta = theta.at[nA*nB+counter:].set(Delta)
+    #theta[nA*nB+counter:] = Delta
     return theta
 
 # Helper Functions
@@ -31,7 +33,7 @@ def int2array(states, L):
     N = states.shape[0]
     toret = jnp.zeros((N, L)).astype('int')
     for i in range(L):
-        toret = toret.at[:,-1-1].set(states % 2)
+        toret = toret.at[:,-i-1].set(states % 2)
         #toret[:, -i-1] = states % 2
         states = states // 2
     return toret
@@ -84,11 +86,13 @@ def get_padded_J(JAB):
     nA = JAB.shape[0]
     nB = JAB.shape[1]
     n = nA+nB
-    indsA = np.arange(nA)
-    indsB = np.arange(nA, n)
-    JAB_pad = np.zeros([n, n])
-    JAB_pad[indsA[:,np.newaxis],indsB[np.newaxis,:]] = JAB
-    JAB_pad[indsB[:,np.newaxis],indsA[np.newaxis,:]] = JAB
+    indsA = jnp.arange(nA)
+    indsB = jnp.arange(nA, n)
+    JAB_pad = jnp.zeros([n, n])
+    JAB_pad = JAB_pad.at[indsA[:,np.newaxis],indsB[np.newaxis,:]].set(JAB)
+    JAB_pad = JAB_pad.at[indsB[:,np.newaxis],indsA[np.newaxis,:]].set(JAB.T)
+    #JAB_pad[indsA[:,np.newaxis],indsB[np.newaxis,:]] = JAB
+    #JAB_pad[indsB[:,np.newaxis],indsA[np.newaxis,:]] = JAB
     return JAB_pad
 
 def partial_trace(psi,nA,nB):
@@ -154,6 +158,7 @@ class SensorSim:
         return HAB
     
     def build_exact_evolution(self, hyperparams):
+        # in progress, low priority
         # computes the quench (H_AB, H_BB, \pm H_AB) on a list of pure states
         # returns list of evolved pure states, each element is of shape (dimH, len(ts))
         nA = self.nA
@@ -244,9 +249,10 @@ class SensorSim:
         gB = hyperparams['gB']
         reverse_sense = hyperparams['reverse_sense']
 
-        psi0_A = hyperparams["psi0_A"] # tensor of initial sampled states , (2**n, M)
+        psi0_A = hyperparams["psi0_A"] # single state, 2**nA
+        M = hyperparams['M']
         psi0 = jnp.array([jnp.kron(psi0_A, get_haar_random_state(2**nB, m)) for m in range(M)]).T # tensor of initial sampled states , (2**n, M)
-        M = psi0.shape[1]
+        #M = psi0.shape[1]
 
         Hx, Hy = build_hadamards(n)
         Hx_nB, Hy_nB = build_hadamards(nB)
@@ -310,6 +316,7 @@ class SensorSim:
             
             psi1 = psi0.copy()
             
+            # prepare thermal initial state
             # imag time evolve
             psi1 = fori_loop(0, N_beta, apply_molecule_trotter_step_imag, psi1)
             psi1 = psi1/jnp.sqrt(jnp.trace(psi1.conj().T @ psi1)) # divide by estimator of partition function
@@ -347,9 +354,11 @@ class SensorSim:
         return jit(apply_evolution)
 
 
-    def build_reduce(hyperparams):
-        nA = hyperparams['nA']
-        nB = hyperparams['nB']
+    def build_reduce(self):
+        nA = self.nA
+        nB = self.nB
+        #nA = hyperparams['nA']
+        #nB = hyperparams['nB']
 
         # This function takes as input a density matrix,
         # with shape (T,  ndim, M)
@@ -365,3 +374,14 @@ class SensorSim:
             return rho
             #return jnp.stack([jnp.real(rho), jnp.imag(rho)])
         return jit(reduce)
+    
+
+    def simulate_sensor_state(self, hyperparams):
+        reduce_func = self.build_reduce()
+        sensing_evol = self.build_evolution(hyperparams)
+        F = lambda theta, args : reduce_func(sensing_evol(theta, args))
+        gradF = jit(jacfwd(F))
+        return F, gradF
+        #gradF(theta, args).shape
+        #rhos = F(theta, args)
+        #drhos = gradF(theta, args)
