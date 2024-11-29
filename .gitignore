@@ -136,3 +136,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# figures, analysis, etc.
+figures/
+playground/
+TODO
+
+# extras
+statistical-nmr/
