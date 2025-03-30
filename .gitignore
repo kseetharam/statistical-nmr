@@ -140,7 +140,14 @@ dmypy.json
 # figures, analysis, etc.
 figures/
 playground/
-TODO
+experiments/results/
+*.TODO
 
 # extras
 statistical-nmr/
+data/gissmo/plots
+data/gissmo/metadata
+data/gissmo/*.py
+DB/
+*.svg
+*.png
