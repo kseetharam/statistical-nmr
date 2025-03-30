@@ -11,7 +11,7 @@ from stNMR.jax.hamiltonian.utils import separate_complex
 @eqx.filter_value_and_grad
 def mse(
     model: NeuralODE, calc_hamiltonian_f: Callable,
-    rho: jnp.ndarray, ts: jnp.ndarray, op: jnp.ndarray, t2: float, n_td: int, sw: float, phase: float,
+    rho: jnp.ndarray, ts: jnp.ndarray, op: jnp.ndarray, t2: float, apodize: bool, n_td: int, sw: float, phase: float,
     gt: jnp.ndarray, nn_off: bool=True
 ) -> jax.Array:
 
@@ -22,6 +22,7 @@ def mse(
         op=separate_complex(op),
         nn_off=nn_off,
         t2=t2,
+        apodize=apodize,
         n_td=n_td,
         sw=sw,
         phase=phase,
@@ -38,7 +39,7 @@ def mse(
 @eqx.filter_value_and_grad
 def mse_with_partition(
     diff_model: NeuralODE, static_model: NeuralODE, calc_hamiltonian_f: Callable,
-    rho: jnp.ndarray, ts: jnp.ndarray, op: jnp.ndarray, t2: float, n_td: int, sw: float, phase: float,
+    rho: jnp.ndarray, ts: jnp.ndarray, op: jnp.ndarray, t2: float, apodize: bool, n_td: int, sw: float, phase: float,
     gt: jnp.ndarray, nn_off: bool=True
 ) -> jax.Array:
 
@@ -53,6 +54,7 @@ def mse_with_partition(
         op=separate_complex(op),
         nn_off=nn_off,
         t2=t2,
+        apodize=apodize,
         n_td=n_td,
         sw=sw,
         phase=phase,

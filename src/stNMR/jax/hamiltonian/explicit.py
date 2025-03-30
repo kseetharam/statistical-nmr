@@ -4,7 +4,7 @@ from jax.scipy.linalg import expm as jax_expm
 from stNMR.jax.nmr.fid import apodization
 
 
-def explicit_exponentiation(hamiltonian: jnp.ndarray, rho: jnp.ndarray, op:jnp.ndarray, ts: jnp.ndarray, dt: float, n_td: int, t2: float) -> jnp.ndarray:
+def explicit_exponentiation(hamiltonian: jnp.ndarray, rho: jnp.ndarray, op:jnp.ndarray, ts: jnp.ndarray, dt: float, n_td: int, t2: float, apodize: bool = False) -> jnp.ndarray:
     """Explicit exponentiation solution to the given system."""
     # Matrix exponential
     P = jax_expm(-1j * hamiltonian * dt)
@@ -17,6 +17,7 @@ def explicit_exponentiation(hamiltonian: jnp.ndarray, rho: jnp.ndarray, op:jnp.n
         FID = FID.at[i].set(jnp.trace(op @ rho))
         rho = P @ rho @ P.T.conj()
 
-    FID_apod = apodization(fid=FID, t2=t2, dt=dt)
-
-    return FID_apod
+    if apodize:
+        FID_apod = apodization(fid=FID, t2=t2, dt=dt)
+        return FID_apod
+    return FID

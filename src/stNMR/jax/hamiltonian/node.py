@@ -130,7 +130,7 @@ class NeuralODE(eqx.Module):
             # NeuralODE
             ts, y0, op, nn_off: bool,
             # NMR
-            t2: float, n_td: int, sw: int, phase: float,
+            t2: float, n_td: int, sw: int, phase: float, apodize: bool,
             calc_hamiltonian_fun,
     ):
         """
@@ -168,5 +168,7 @@ class NeuralODE(eqx.Module):
         )
 
         # Apodization and Fourier transform to spectrum
-        FID_apod = apodization(FID, t2, dt)
-        return FID_apod
+        if apodize:
+            FID_apod = apodization(FID, t2, dt)
+            return FID_apod
+        return FID
