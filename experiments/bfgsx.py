@@ -55,37 +55,6 @@ def make_step(
     model = eqx.apply_updates(model, updates)
     return loss, model, opt_state, grads, updates
 
-
-def finite_difference_grad(make_step_fn, rho, ts, op, t2, n_td, sw, phase, gt, calc_hamiltonian_f, model, opt_state, nn_off, filter_spec=None, epsilon=1e-5):
-    """Computes finite difference gradients for make_step using JAX optimizations."""
-
-    h_mat_shape = model.h_mat.shape
-    grads_fd = jnp.zeros(h_mat_shape)
-
-    def loss_fn(m):
-        loss, _, _, _, _ = make_step_fn(rho, ts, op, t2, n_td, sw, phase, gt, calc_hamiltonian_f, m, opt_state, nn_off, filter_spec)
-        return loss
-
-    # @jax.jit
-    def compute_grad(idx):
-        row, col = idx
-        h_val = model.h_mat[row, col]
-
-        # Modify only the specific element efficiently
-        model_plus = eqx.tree_at(lambda m: m.h_mat, model, model.h_mat.at[row, col].set(h_val + epsilon))
-        model_minus = eqx.tree_at(lambda m: m.h_mat, model, model.h_mat.at[row, col].set(h_val - epsilon))
-
-        loss_plus = loss_fn(model_plus)
-        loss_minus = loss_fn(model_minus)
-
-        return (loss_plus - loss_minus) / (2 * epsilon)
-
-    # Generate index pairs and vectorize
-    indices = jnp.array([(r, c) for r in range(h_mat_shape[0]) for c in range(h_mat_shape[1])])
-    grads_fd = jax.vmap(compute_grad)(indices).reshape(h_mat_shape)
-
-    return grads_fd
-
 ###############################################################################################
 #                                            MAIN                                             #
 ###############################################################################################
