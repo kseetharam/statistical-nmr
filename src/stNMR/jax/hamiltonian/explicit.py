@@ -1,23 +1,42 @@
-from jax import numpy as jnp
+from jax import (lax, numpy as jnp)
 from jax.scipy.linalg import expm as jax_expm
 
 from stNMR.jax.nmr.fid import apodization
 
 
-def explicit_exponentiation(hamiltonian: jnp.ndarray, rho: jnp.ndarray, op:jnp.ndarray, ts: jnp.ndarray, dt: float, n_td: int, t2: float, apodize: bool = False) -> jnp.ndarray:
-    """Explicit exponentiation solution to the given system."""
+# def explicit_exponentiation(hamiltonian: jnp.ndarray, rho: jnp.ndarray, op:jnp.ndarray, ts: jnp.ndarray, dt: float, n_td: int, t2: float, apodize: bool = False) -> jnp.ndarray:
+#     """Explicit exponentiation solution to the given system."""
+#     # Matrix exponential
+#     P = jax_expm(-1j * hamiltonian * dt)
+
+#     # Initialize FID as zeros
+#     FID = jnp.zeros(n_td, dtype=jnp.complex128)
+
+#     # ATTN: need to vectorize this!
+#     for i in range(n_td):
+#         FID = FID.at[i].set(jnp.trace(op @ rho))
+#         rho = P @ rho @ P.T.conj()
+
+#     if apodize:
+#         FID_apod = apodization(fid=FID, t2=t2, dt=dt)
+#         return FID_apod
+#     return FID
+
+def explicit_exponentiation(hamiltonian: jnp.ndarray, rho: jnp.ndarray, op: jnp.ndarray, ts: jnp.ndarray, dt: float, n_td: int, t2: float, apodize: bool = False) -> jnp.ndarray:
+    """Explicit exponentiation solution to the given system using jax.vmap."""
     # Matrix exponential
     P = jax_expm(-1j * hamiltonian * dt)
 
-    # Initialize FID as zeros
-    FID = jnp.zeros(n_td, dtype=jnp.complex128)
-
-    # ATTN: need to vectorize this!
-    for i in range(n_td):
-        FID = FID.at[i].set(jnp.trace(op @ rho))
+    def step(carry, _):
+        rho = carry
+        fid_value = jnp.trace(op @ rho)
         rho = P @ rho @ P.T.conj()
+        return rho.astype(jnp.complex64), fid_value.astype(jnp.complex64)
+
+    # Perform the iteration using scan
+    _, FID = lax.scan(step, rho, jnp.arange(n_td))
 
     if apodize:
-        FID_apod = apodization(fid=FID, t2=t2, dt=dt)
-        return FID_apod
+        FID = apodization(fid=FID, t2=t2, dt=dt)
+
     return FID
