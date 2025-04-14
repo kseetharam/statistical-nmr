@@ -8,7 +8,7 @@ from stNMR.jax.hamiltonian.node import NeuralODE
 from stNMR.jax.hamiltonian.utils import separate_complex
 
 
-@eqx.filter_value_and_grad
+@eqx.filter_value_and_grad()
 def mse(
     model: NeuralODE, calc_hamiltonian_f: Callable,
     rho: jnp.ndarray, ts: jnp.ndarray, op: jnp.ndarray, t2: float, apodize: bool, n_td: int, sw: float, phase: float,
@@ -36,7 +36,7 @@ def mse(
     return jnp.mean((spec_y_values - gt) ** 2)
 
 
-@eqx.filter_value_and_grad
+@eqx.filter_value_and_grad()
 def mse_with_partition(
     diff_model: NeuralODE, static_model: NeuralODE, calc_hamiltonian_f: Callable,
     rho: jnp.ndarray, ts: jnp.ndarray, op: jnp.ndarray, t2: float, apodize: bool, n_td: int, sw: float, phase: float,
