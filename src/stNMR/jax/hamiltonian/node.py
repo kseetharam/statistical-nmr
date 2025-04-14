@@ -34,7 +34,7 @@ class Func(eqx.Module):
             out_size=2*in_features,
             width_size=hidden_features,
             depth=num_layers,
-            activation=jnn.softplus,
+            activation=jnn.sigmoid,
             key=key,
         )
 
@@ -62,10 +62,12 @@ class Func(eqx.Module):
         """
 
         if args[1]:  # do NOT use the MLP
-            return (self.simulation(t, y, args))
+            out = (self.simulation(t, y, args))
 
         else:  # use both simulation + MLP
-            return self.mlp(y.flatten()).reshape(y.shape) + self.simulation(t, y, args)
+            out = separate_complex(-1j * recombine_complex(self.mlp(y.flatten()).reshape(y.shape))) + self.simulation(t, y, args)
+
+        return out
 
     def simulation(self, t, y, args) -> jnp.ndarray:
         """
@@ -131,7 +133,7 @@ class NeuralODE(eqx.Module):
             ts, y0, op, nn_off: bool,
             # NMR
             t2: float, n_td: int, sw: int, phase: float, apodize: bool,
-            calc_hamiltonian_fun,
+            calc_hamiltonian_fun, return_solution: bool = False,
     ):
         """
         Forward pass of the model.
@@ -151,16 +153,22 @@ class NeuralODE(eqx.Module):
         dt = (ts[1] - ts[0])
         solution = diffrax.diffeqsolve(
             terms=diffrax.ODETerm(self.func),
-            solver=diffrax.Tsit5(),
+            solver=diffrax.Bosh3(),
             t0=ts[0],
             t1=ts[-1],
-            dt0=dt,
+            dt0=None,
             y0=y0,
-            stepsize_controller=diffrax.PIDController(rtol=1e-5, atol=1e-5),
+            stepsize_controller=diffrax.PIDController(rtol=1e-3, atol=1e-6),
             saveat=diffrax.SaveAt(ts=ts),
             args=(separate_complex(h0), nn_off),
-            max_steps=(4096*2)**2
+            max_steps=(4096*2)**2,
         )
+
+        if return_solution:
+            return solution.ys
+
+        # assert False, \
+        #     f"Trace of the density should be 1.0. Recieved {jnp.trace(recombine_complex(solution.ys), axis1=1, axis2=2)}, {jnp.trace(recombine_complex(y0))}, {recombine_complex(solution.ys).shape}"
 
         # Vectorize the computation of FID
         FID = jax.vmap(compute_fid, in_axes=(0, 0, None, None))(
