@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union, Optional, Literal
 
 import torch
 from torch.utils.data import Dataset
@@ -21,7 +21,7 @@ class GissmoDataset(Dataset):
             data_folder: Optional[Union[str, Path]] = None,
             spec_folder: Optional[Union[str, Path]] = None,
             n_spins: Optional[int] = None,
-            return_type: str = "torch"
+            return_type: Literal["torch", "jax", "numpy"] = "torch"
     ) -> None:
 
         assert return_type in ["torch", "jax", "numpy"],\
