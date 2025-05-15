@@ -22,21 +22,24 @@ from stNMR.jax.nmr.fid import apodization
 #         return FID_apod
 #     return FID
 
+
+# @jit
 def explicit_exponentiation(hamiltonian: jnp.ndarray, rho: jnp.ndarray, op: jnp.ndarray, ts: jnp.ndarray, dt: float, n_td: int, t2: float, apodize: bool = False) -> jnp.ndarray:
     """Explicit exponentiation solution to the given system using jax.vmap."""
     # Matrix exponential
     P = jax_expm(-1j * hamiltonian * dt)
+    P_conj = P.T.conj()
 
     def step(carry, _):
         rho = carry
         fid_value = jnp.trace(op @ rho)
-        rho = P @ rho @ P.T.conj()
+        rho = P @ rho @ P_conj
         return rho.astype(jnp.complex64), fid_value.astype(jnp.complex64)
 
     # Perform the iteration using scan
-    _, FID = lax.scan(step, rho, jnp.arange(n_td))
+    _, FID = lax.scan(step, rho, jnp.arange(len(ts)))
 
-    if apodize:
-        FID = apodization(fid=FID, t2=t2, dt=dt)
+    # if apodize:
+    #     FID = apodization(fid=FID, t2=t2, dt=dt)
 
     return FID
