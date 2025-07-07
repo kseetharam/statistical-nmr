@@ -1,3 +1,4 @@
+import time
 import torch
 
 from stNMR.torch.nmr.fid import apodization
@@ -10,14 +11,15 @@ def explicit_exponentiation(
     """Explicit exponentiation solution to the given system."""
     # Matrix exponential using scipy (still efficient for dense matrices)
     P = torch.matrix_exp(-1j * hamiltonian * dt)
+    P_conj = P.conj().T
 
     # Initialize FID as zeros
     FID = torch.zeros(n_td, dtype=torch.cfloat, device=hamiltonian.device)
 
     # Explicit exponentiation loop
     for i in range(n_td):
-        FID[i] = torch.trace(torch.matmul(op, rho))
-        rho = torch.matmul(P, torch.matmul(rho, P.conj().T))
+        FID[i] = torch.trace(op @ rho)
+        rho = P @ rho @ P_conj
 
     if apodize:
         FID = apodization(fid=FID, t2=t2, dt=dt)

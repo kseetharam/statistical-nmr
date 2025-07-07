@@ -1,3 +1,4 @@
+import itertools
 import numpy as np
 
 
@@ -38,4 +39,22 @@ def calc_hamiltonian(h_mat: np.ndarray, B0: float, Ix: np.ndarray, Iy: np.ndarra
                 + np.dot(Iy[:, :, i], Iy[:, :, j])
                 + np.dot(Iz[:, :, i], Iz[:, :, j])
             )
+    return H0
+
+
+def hamiltonian_from_vectors(v: np.ndarray, J: np.ndarray, Ix: np.ndarray, Iy: np.ndarray, Iz: np.ndarray, B0: int) -> np.ndarray:
+
+    nspins = len(v)
+    dim = 2 ** nspins
+    J_idx = np.array(list(itertools.combinations(range(0, nspins), 2)))
+
+    H0 = np.zeros((dim, dim), dtype=complex)
+    for i in range(nspins):
+        H0 += 2 * np.pi * B0 * (v[i]-0) * Iz[:,:,i]
+
+    for i in range(J_idx.shape[0]):
+        idx_1 = J_idx[i,0]
+        idx_2 = J_idx[i,1]
+        H0 += 2*np.pi*J[i]*(np.dot(Ix[:,:,idx_1],Ix[:,:,idx_2]) + np.dot(Iy[:,:,idx_1],Iy[:,:,idx_2]) + np.dot(Iz[:,:,idx_1], Iz[:,:,idx_2]))
+
     return H0

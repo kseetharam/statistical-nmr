@@ -8,6 +8,7 @@ def explicit_exponentiation(hamiltonian: np.ndarray, rho: np.ndarray, op:np.ndar
     """Explicit exponentiation solution to the given system."""
     # Matrix exponential
     P = expm(-1j * hamiltonian * dt)
+    P_conj = P.T.conj()
 
     # Initialize FID as zeros
     FID = np.zeros(n_td, dtype=np.complex128)
@@ -15,7 +16,7 @@ def explicit_exponentiation(hamiltonian: np.ndarray, rho: np.ndarray, op:np.ndar
     # ATTN: need to vectorize this!
     for i in range(n_td):
         FID[i] = (np.trace(op @ rho))
-        rho = P @ rho @ P.T.conj()
+        rho = P @ rho @ P_conj
 
     if apodize:
         FID_apod = apodization(fid=FID, t2=t2, dt=dt)
