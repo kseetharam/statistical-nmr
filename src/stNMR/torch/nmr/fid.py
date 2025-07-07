@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 def apodization(fid: torch.Tensor, t2: float, dt: float) -> torch.Tensor:
     """Applies apodization to the FID."""
-    idx = torch.arange(fid.shape[0], dtype=torch.float32)
+    idx = torch.arange(fid.shape[0], dtype=torch.float32, device=fid.device)
     apod = torch.exp(-dt / t2 * idx)
     return fid * apod
 
@@ -32,7 +32,7 @@ def fid_to_spec(fid: torch.Tensor, n_td: int, sw: int, phase: float, normalize: 
     # Perform Fourier transform
     spec, freq_series, time_series = fourier_transform(fid, n_td, sw)
     # Fourier transformed spectrum with phase adjustment
-    FTspec = torch.exp(1j * phase) * spec
+    FTspec = torch.exp(torch.tensor(1j * phase).to(fid.device)) * spec
     if normalize:
         FTspec /= torch.max(torch.abs(FTspec))
     return fid, time_series, FTspec, freq_series
