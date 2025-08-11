@@ -48,11 +48,8 @@ def calc_hamiltonian(h_mat: torch.Tensor, B0: float, Ix: torch.Tensor, Iy: torch
 def hamiltonian_from_vectors(v: torch.Tensor, J: torch.Tensor, Ix: torch.Tensor, Iy: torch.Tensor, Iz: torch.Tensor, B0: int) -> torch.Tensor:
 
     nspins = len(v)
-    print(nspins)
-    print(Iz.shape)
-    print("--"*20)
     dim = 2 ** nspins
-    # J_idx = torch.from_numpy(np.array(list(itertools.combinations(range(0, nspins), 2)))).to(v.device)
+
     J_idx = torch.combinations(torch.arange(nspins, device=v.device), r=2)
 
     H0 = torch.zeros((dim, dim), dtype=torch.complex64, device=v.device)
